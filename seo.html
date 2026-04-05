@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEO Optimize AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .google-font { font-family: arial, sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen text-gray-800 p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <!-- Header & AI Bar -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 mb-4 shadow-sm border border-emerald-200">
+                <i class="fa-brands fa-google text-2xl"></i>
+            </div>
+            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight mb-2">SEO <span class="text-emerald-600">Optimize AI</span></h1>
+            <p class="text-gray-500">Auto-generate perfect Meta Tags using generative AI.</p>
+            
+            <div class="mt-8 max-w-3xl mx-auto bg-white p-2 rounded-2xl shadow-lg shadow-gray-200/50 flex flex-col md:flex-row border border-gray-100 gap-2">
+                
+                <div class="flex-1 relative flex items-center">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 text-gray-400"></i>
+                    <input type="text" id="ai-topic" placeholder="What is your webpage about? (e.g. Keto diet recipes)" class="w-full pl-10 pr-4 py-3 bg-transparent outline-none text-gray-700">
+                </div>
+                
+                <div class="w-full md:w-32 border-t md:border-t-0 md:border-l border-gray-100 px-2 flex items-center justify-center">
+                    <select id="ai-lang" class="w-full py-3 bg-transparent outline-none text-gray-600 text-sm font-medium cursor-pointer text-center appearance-none">
+                        <option value="English">🇬🇧 EN</option>
+                        <option value="Bengali">🇧🇩 BN</option>
+                        <option value="Hindi">🇮🇳 HI</option>
+                    </select>
+                </div>
+
+                <button id="ai-generate-btn" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-xl transition-all shadow-md shadow-emerald-200 flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-bolt"></i> Optimize
+                </button>
+            </div>
+            <p id="error-msg" class="text-red-500 text-sm mt-3 hidden"></p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Left: Inputs -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600"><i class="fa-solid fa-code"></i></div>
+                        <h2 class="text-lg font-bold text-gray-800">Meta Information</h2>
+                    </div>
+                    <button onclick="clearForm()" class="text-sm text-gray-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash-can"></i> Clear</button>
+                </div>
+
+                <div class="space-y-5 flex-1">
+                    <div>
+                        <label class="flex justify-between text-sm font-semibold text-gray-600 mb-1">
+                            Title Tag <span id="title-count" class="text-xs font-normal text-gray-400">0/60</span>
+                        </label>
+                        <input type="text" id="mTitle" oninput="updateUI()" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition bg-gray-50 focus:bg-white text-[15px]">
+                    </div>
+                    
+                    <div>
+                        <label class="flex justify-between text-sm font-semibold text-gray-600 mb-1">
+                            Meta Description <span id="desc-count" class="text-xs font-normal text-gray-400">0/155</span>
+                        </label>
+                        <textarea id="mDesc" oninput="updateUI()" rows="4" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition resize-none bg-gray-50 focus:bg-white text-[14px]"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-600 mb-1">Target Keywords</label>
+                        <input type="text" id="mKeys" oninput="updateUI()" placeholder="Comma separated..." class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition bg-gray-50 focus:bg-white text-[14px]">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Previews -->
+            <div class="space-y-6 flex flex-col h-full">
+                
+                <!-- Google Preview -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2"><i class="fa-brands fa-google"></i> Google Search Preview</h2>
+                    <div class="google-font bg-white p-4 border border-gray-200 rounded-xl max-w-[600px] shadow-sm">
+                        <div class="flex items-center gap-2 mb-1">
+                            <div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] overflow-hidden">
+                                <img src="https://www.google.com/favicon.ico" class="w-4 h-4 opacity-70">
+                            </div>
+                            <div class="text-[12px] text-[#202124] pt-0.5">https://yourwebsite.com <i class="fa-solid fa-ellipsis-vertical text-gray-400 ml-2 text-[10px]"></i></div>
+                        </div>
+                        <a href="#" id="pTitle" class="text-[20px] text-[#1a0dab] hover:underline block mb-1 leading-tight mt-1">Your Page Title</a>
+                        <div id="pDesc" class="text-[14px] text-[#4d5156] leading-[1.58] line-clamp-2 mt-1">Your meta description will appear right here when searchers find you on Google.</div>
+                    </div>
+                </div>
+
+                <!-- Code Block -->
+                <div class="bg-slate-900 p-6 rounded-2xl shadow-sm relative group flex-1 flex flex-col">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">HTML Head Tags</div>
+                        <button onclick="copyCode()" id="copy-code-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs py-1.5 px-3 rounded-md transition border border-slate-700 hover:border-slate-600 flex items-center gap-1">
+                            <i class="fa-regular fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    <pre id="codeOutput" class="flex-1 bg-slate-950/50 p-4 rounded-xl border border-slate-800 text-emerald-400 text-[13px] font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed select-all"></pre>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+<script>
+    const WORKER_URL = 'https://crimson-firefly-6c68.ashrafhosen839.workers.dev/';
+
+    document.getElementById('ai-generate-btn').addEventListener('click', async () => {
+        const topic = document.getElementById('ai-topic').value.trim();
+        const lang = document.getElementById('ai-lang').value;
+        const btn = document.getElementById('ai-generate-btn');
+        const errorMsg = document.getElementById('error-msg');
+        
+        if(!topic) {
+            document.getElementById('ai-topic').classList.add('ring-2', 'ring-red-400');
+            setTimeout(() => document.getElementById('ai-topic').classList.remove('ring-2', 'ring-red-400'), 2000);
+            return;
+        }
+
+        errorMsg.classList.add('hidden');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Analyzing...';
+
+        // Strict prompt for language and JSON format
+        const prompt = `You are an SEO expert. Generate SEO meta tags for a webpage about: "${topic}". 
+CRITICAL REQUIREMENT: The title, description, and keywords MUST be written completely in ${lang} language. Do NOT use English unless the user's topic contains specific English brand names.
+Reply STRICTLY in this exact JSON format (do not add any markdown, just raw JSON):
+{"title": "SEO optimized title in ${lang} (max 60 chars)", "desc": "SEO optimized description in ${lang} (max 150 chars)", "keys": "comma, separated, keywords, in, ${lang}"}`;
+
+        try {
+            const response = await fetch(WORKER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: prompt })
+            });
+            
+            if (!response.ok) throw new Error("Server error occurred.");
+            
+            const data = await response.json();
+            const reply = data.response || data.reply || data.message || data.text || data.content;
+
+            // Extract JSON from text safely
+            let parsed = null;
+            try {
+                // Remove potential markdown code blocks like ```json ... ```
+                let cleanJsonStr = reply.replace(/```json/g, '').replace(/```/g, '').trim();
+                const jsonMatch = cleanJsonStr.match(/\{[\s\S]*\}/);
+                if(jsonMatch) {
+                    parsed = JSON.parse(jsonMatch[0]);
+                } else {
+                    throw new Error("No JSON object found in response.");
+                }
+            } catch(e) {
+                console.log("Raw reply:", reply);
+                throw new Error("Failed to parse AI output. AI didn't return proper JSON.");
+            }
+
+            if(parsed.title) document.getElementById('mTitle').value = parsed.title;
+            if(parsed.desc) document.getElementById('mDesc').value = parsed.desc;
+            if(parsed.keys) document.getElementById('mKeys').value = parsed.keys;
+            
+            updateUI();
+            
+            // Success indication
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Done!';
+            setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Optimize'; }, 2000);
+
+        } catch (e) {
+            errorMsg.innerText = e.message;
+            errorMsg.classList.remove('hidden');
+            console.error(e);
+        } finally {
+            btn.disabled = false;
+            if(btn.innerHTML.includes('Analyzing')) {
+                btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Optimize';
+            }
+        }
+    });
+
+    function updateUI() {
+        const title = document.getElementById('mTitle').value;
+        const desc = document.getElementById('mDesc').value;
+        const keys = document.getElementById('mKeys').value;
+
+        // Count logic & color change
+        document.getElementById('title-count').innerText = `${title.length}/60`;
+        document.getElementById('title-count').className = `text-xs font-medium ${title.length > 60 ? 'text-red-500' : 'text-gray-400'}`;
+        document.getElementById('desc-count').innerText = `${desc.length}/155`;
+        document.getElementById('desc-count').className = `text-xs font-medium ${desc.length > 155 ? 'text-red-500' : 'text-gray-400'}`;
+
+        document.getElementById('pTitle').innerText = title || "Your Page Title";
+        document.getElementById('pDesc').innerText = desc || "Your meta description will appear right here when searchers find you on Google.";
+
+        // HTML encoding for pre tag
+        const escapeHTML = str => str.replace(/[&<>'"]/g, 
+            tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag])
+        );
+
+        let code = `<!-- SEO Meta Tags -->\n`;
+        code += `<title>${escapeHTML(title)}</title>\n`;
+        code += `<meta name="title" content="${escapeHTML(title)}">\n`;
+        code += `<meta name="description" content="${escapeHTML(desc)}">\n`;
+        if(keys) code += `<meta name="keywords" content="${escapeHTML(keys)}">\n`;
+        
+        // Let's add some style to the code output for better readability
+        const coloredCode = code
+            .replace(/&lt;!--(.*?)--&gt;/g, '<span class="text-slate-500">&lt;!--$1--&gt;</span>')
+            .replace(/&lt;([^\s>]+)/g, '&lt;<span class="text-pink-400">$1</span>')
+            .replace(/([a-zA-Z-]+)="([^"]*)"/g, '<span class="text-sky-300">$1</span>="<span class="text-amber-300">$2</span>"');
+
+        document.getElementById('codeOutput').innerHTML = coloredCode;
+    }
+
+    function copyCode() {
+        // Need to extract raw text, not html with spans
+        const title = document.getElementById('mTitle').value;
+        const desc = document.getElementById('mDesc').value;
+        const keys = document.getElementById('mKeys').value;
+        let rawCode = `<!-- SEO Meta Tags -->\n<title>${title}</title>\n<meta name="title" content="${title}">\n<meta name="description" content="${desc}">\n`;
+        if(keys) rawCode += `<meta name="keywords" content="${keys}">\n`;
+
+        navigator.clipboard.writeText(rawCode).then(() => {
+            const btn = document.getElementById('copy-code-btn');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i> Copied';
+            btn.classList.add('border-emerald-500');
+            setTimeout(() => { 
+                btn.innerHTML = originalHtml; 
+                btn.classList.remove('border-emerald-500');
+            }, 2000);
+        });
+    }
+
+    function clearForm() {
+        document.getElementById('mTitle').value = '';
+        document.getElementById('mDesc').value = '';
+        document.getElementById('mKeys').value = '';
+        document.getElementById('ai-topic').value = '';
+        updateUI();
+    }
+    
+    updateUI();
+</script>
+</body>
+</html>
+
+
