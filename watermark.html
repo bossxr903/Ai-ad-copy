@@ -3,199 +3,385 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Watermark Studio | Dark UI</title>
+    <title>BrandMark Pro | Manual Watermark Studio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Platypi:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Pacifico&family=Bebas+Neue&family=Anton&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f172a; }
-        /* Custom Range Slider */
+        body { font-family: 'Poppins', sans-serif; background-color: #0b0f19; color: #e2e8f0; }
+        .font-platypi { font-family: 'Platypi', serif; }
+        
+        /* Custom Styling for Inputs */
         input[type=range] { -webkit-appearance: none; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #38bdf8; cursor: pointer; margin-top: -6px; box-shadow: 0 0 10px rgba(56,189,248,0.5); }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #334155; border-radius: 2px; }
-        #canvas-wrapper { background-image: radial-gradient(#334155 1px, transparent 1px); background-size: 20px 20px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%; background: #0ea5e9; cursor: pointer; margin-top: -7px; box-shadow: 0 0 10px rgba(14,165,233,0.5); border: 2px solid #fff; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #1f2937; border-radius: 2px; }
+        
+        /* Checkboard background for canvas placeholder */
+        #canvas-wrapper { background-image: linear-gradient(45deg, #111 25%, transparent 25%), linear-gradient(-45deg, #111 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #111 75%), linear-gradient(-45deg, transparent 75%, #111 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; border: 2px dashed #1f2937; }
+        
+        /* Loader animation */
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .animate-spin-slow { animation: spin 3s linear infinite; }
     </style>
 </head>
-<body class="text-slate-200 min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col selection:bg-sky-800/50">
 
-    <!-- Header -->
-    <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 px-6 py-4 flex justify-between items-center">
+    <header class="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50 px-6 py-3 flex justify-between items-center shadow-lg">
         <div class="flex items-center gap-3">
-            <div class="bg-sky-500/20 p-2 rounded-lg text-sky-400"><i class="fa-solid fa-stamp"></i></div>
-            <h1 class="text-xl font-bold text-white tracking-wide">BrandMark <span class="text-sky-400">AI</span></h1>
+            <div class="bg-gradient-to-br from-sky-400 to-blue-600 p-2.5 rounded-xl text-white shadow-md shadow-sky-900/30">
+                <i class="fa-solid fa-stamp text-xl"></i>
+            </div>
+            <h1 class="text-2xl font-extrabold text-white tracking-tighter">BrandMark <span class="text-sky-400 font-medium">Pro</span></h1>
+            <span class="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full border border-gray-600">Manual Mode</span>
         </div>
-        <button onclick="downloadImage()" class="bg-sky-500 hover:bg-sky-400 text-slate-900 font-semibold py-2 px-5 rounded-lg transition-colors flex items-center gap-2 text-sm">
-            <i class="fa-solid fa-download"></i> Export Image
+        <button onclick="downloadImage()" class="bg-sky-600 hover:bg-sky-500 text-white font-semibold py-2.5 px-6 rounded-xl transition-all flex items-center gap-2.5 text-sm shadow-md shadow-sky-900/50 active:scale-95">
+            <i class="fa-solid fa-cloud-arrow-down"></i> Export High-Res
         </button>
     </header>
 
     <main class="flex-1 flex flex-col lg:flex-row overflow-hidden">
         
-        <!-- Sidebar Controls -->
-        <aside class="w-full lg:w-80 border-r border-slate-800 bg-slate-900 p-6 overflow-y-auto shrink-0 space-y-6 shadow-2xl z-0">
+        <aside class="w-full lg:w-[360px] border-r border-gray-800 bg-gray-900 p-6 overflow-y-auto shrink-0 space-y-7 shadow-2xl relative z-20">
             
-            <!-- Upload -->
-            <div>
-                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">1. Base Image</label>
+            <section>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-[0.2em] mb-3">1. Source Image</label>
                 <div class="relative group cursor-pointer">
                     <input type="file" id="imageLoader" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                    <div class="border-2 border-dashed border-slate-700 rounded-xl p-4 text-center group-hover:border-sky-500 group-hover:bg-sky-500/5 transition-all">
-                        <i class="fa-regular fa-image text-2xl text-slate-500 group-hover:text-sky-400 mb-2"></i>
-                        <p class="text-sm font-medium text-slate-300">Click to upload</p>
+                    <div class="border-2 border-dashed border-gray-700 rounded-2xl p-6 text-center group-hover:border-sky-500 group-hover:bg-sky-950/30 transition-all flex flex-col items-center gap-3">
+                        <i class="fa-regular fa-images text-4xl text-gray-600 group-hover:text-sky-400 transition-colors"></i>
+                        <p class="text-sm font-medium text-gray-300">Click or Drag Image</p>
+                        <p class="text-xs text-gray-600">Supports JPG, PNG, WEBP</p>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <hr class="border-slate-800">
+            <hr class="border-gray-800">
 
-            <!-- AI Text Generation -->
-            <div>
-                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">2. Watermark Text</label>
-                <div class="flex gap-2">
-                    <input type="text" id="watermarkText" value="Protected Content" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none">
-                    <button id="ai-suggest-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white p-2 rounded-lg shrink-0 transition-colors tooltip relative" title="AI Suggestion">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    </button>
-                </div>
-                <p class="text-xs text-slate-500 mt-2"><i class="fa-solid fa-circle-info mr-1"></i> Type a brand theme and click the wand for AI ideas.</p>
-            </div>
-
-            <!-- Appearance Settings -->
-            <div class="space-y-4">
-                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">3. Appearance</label>
+            <section class="space-y-4">
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-[0.2em]">2. Text & Typography</label>
                 
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-slate-300">Color</span>
-                    <input type="color" id="textColor" value="#ffffff" class="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0">
+                <div>
+                    <input type="text" id="watermarkText" value="© YOUR BRAND" placeholder="Type watermark text..." class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none placeholder-gray-600 font-medium">
                 </div>
 
-                <div>
-                    <div class="flex justify-between text-sm mb-1">
-                        <span class="text-slate-300">Size</span>
-                        <span id="sizeVal" class="text-sky-400 font-mono">40px</span>
+                <div class="grid grid-cols-2 gap-3">
+                    <select id="fontFamily" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-3 text-sm text-gray-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none appearance-none font-medium">
+                        <option value="'Poppins', sans-serif">Poppins (Modern)</option>
+                        <option value="'Platypi', serif">Platypi (Elegant)</option>
+                        <option value="'Bebas Neue', sans-serif">Bebas (Bold Cap)</option>
+                        <option value="'Pacifico', cursive">Pacifico (Script)</option>
+                        <option value="'Anton', sans-serif">Anton (Impact)</option>
+                        <option value="Arial, sans-serif">Arial (Classic)</option>
+                        <option value="monospace">Monospace</option>
+                    </select>
+                    
+                    <div class="relative group">
+                        <input type="file" id="customFontLoader" accept=".ttf,.otf,.woff" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                        <button class="w-full h-full text-xs bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-xl px-3 flex items-center justify-center gap-1.5 font-semibold transition-colors truncate">
+                            <i class="fa-solid fa-font"></i> <span id="customFontStatus">Upload Font</span>
+                        </button>
                     </div>
-                    <input type="range" id="fontSize" min="10" max="150" value="40" class="w-full">
+                </div>
+            </section>
+
+            <hr class="border-gray-800">
+
+            <section class="space-y-4">
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-[0.2em]">3. Styling Options</label>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex items-center justify-between bg-gray-800 border border-gray-700 rounded-xl p-3">
+                        <span class="text-sm text-gray-300">Text Color</span>
+                        <input type="color" id="textColor" value="#ffffff" class="w-9 h-9 rounded-lg cursor-pointer bg-transparent border-0 p-0 outline-none">
+                    </div>
+                    <div class="flex items-center justify-between bg-gray-800 border border-gray-700 rounded-xl p-3">
+                        <span class="text-sm text-gray-300">Shadow Color</span>
+                        <input type="color" id="shadowColor" value="#000000" class="w-9 h-9 rounded-lg cursor-pointer bg-transparent border-0 p-0 outline-none">
+                    </div>
                 </div>
 
-                <div>
-                    <div class="flex justify-between text-sm mb-1">
-                        <span class="text-slate-300">Opacity</span>
-                        <span id="opacityVal" class="text-sky-400 font-mono">50%</span>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                    <div>
+                        <div class="flex justify-between mb-1.5">Size <span id="sizeVal" class="text-sky-400 font-mono">40px</span></div>
+                        <input type="range" id="fontSize" min="10" max="300" value="40" class="w-full">
                     </div>
-                    <input type="range" id="opacity" min="0.1" max="1" step="0.05" value="0.5" class="w-full">
+                    <div>
+                        <div class="flex justify-between mb-1.5">Opacity <span id="opacityVal" class="text-sky-400 font-mono">50%</span></div>
+                        <input type="range" id="opacity" min="0.05" max="1" step="0.05" value="0.5" class="w-full">
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-1.5">Rotation <span id="rotationVal" class="text-sky-400 font-mono">0°</span></div>
+                        <input type="range" id="rotation" min="-180" max="180" value="0" step="1" class="w-full">
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-1.5">Shadow Glow <span id="shadowVal" class="text-sky-400 font-mono">5px</span></div>
+                        <input type="range" id="shadowBlur" min="0" max="50" value="5" class="w-full">
+                    </div>
                 </div>
-            </div>
+            </section>
+
+            <hr class="border-gray-800">
+
+            <section>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-[0.2em] mb-3">4. Layout Variant</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="cursor-pointer group">
+                        <input type="radio" name="layoutVariant" value="single" checked class="peer sr-only">
+                        <div class="border-2 border-gray-700 bg-gray-800 rounded-xl p-4 text-center peer-checked:border-sky-500 peer-checked:bg-sky-950/30 group-hover:border-gray-600 transition-all flex flex-col items-center gap-2">
+                            <i class="fa-solid fa-arrows-to-dot text-xl text-gray-500 peer-checked:text-sky-400"></i>
+                            <span class="text-sm font-semibold text-gray-300 peer-checked:text-white">Single Center</span>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer group">
+                        <input type="radio" name="layoutVariant" value="tiled" class="peer sr-only">
+                        <div class="border-2 border-gray-700 bg-gray-800 rounded-xl p-4 text-center peer-checked:border-sky-500 peer-checked:bg-sky-950/30 group-hover:border-gray-600 transition-all flex flex-col items-center gap-2">
+                            <i class="fa-solid fa-grip text-xl text-gray-500 peer-checked:text-sky-400"></i>
+                            <span class="text-sm font-semibold text-gray-300 peer-checked:text-white">Tiled Grid</span>
+                        </div>
+                    </label>
+                </div>
+            </section>
 
         </aside>
 
-        <!-- Canvas Area -->
-        <section id="canvas-wrapper" class="flex-1 bg-slate-950 p-6 flex items-center justify-center overflow-auto relative">
-            <div class="text-center absolute z-0 text-slate-700 select-none pointer-events-none" id="placeholder-text">
-                <i class="fa-solid fa-image text-6xl mb-4"></i>
-                <h2 class="text-xl font-medium">Upload an image to start</h2>
+        <section id="canvas-wrapper" class="flex-1 bg-gray-950 p-6 flex items-center justify-center overflow-auto relative">
+            <div class="text-center absolute z-0 text-gray-700 select-none pointer-events-none transition-opacity duration-300" id="placeholder-text">
+                <i class="fa-solid fa-photo-film text-8xl mb-6 opacity-30 animate-spin-slow"></i>
+                <h2 class="text-2xl font-semibold text-gray-600 mb-2">Manual Watermark Studio</h2>
+                <p class="text-gray-700 max-w-sm">Upload an image to start. Everything happens in your browser - strictly manual, completely secure.</p>
             </div>
-            <canvas id="imageCanvas" class="max-w-full max-h-full rounded-md shadow-2xl relative z-10 border border-slate-800 transition-opacity duration-300 opacity-0"></canvas>
+            
+            <canvas id="imageCanvas" class="max-w-full max-h-full rounded-lg shadow-2xl relative z-10 border border-gray-800 transition-opacity duration-300 opacity-0"></canvas>
         </section>
 
     </main>
 
 <script>
-    const WORKER_URL = 'https://crimson-firefly-6c68.ashrafhosen839.workers.dev/';
     const canvas = document.getElementById('imageCanvas');
     const ctx = canvas.getContext('2d');
-    let uploadedImage = null;
+    const placeholderText = document.getElementById('placeholder-text');
+    const customFontStatus = document.getElementById('customFontStatus');
 
-    const el = {
-        loader: document.getElementById('imageLoader'),
+    let uploadedImage = null;
+    let customFontLoadedName = null;
+
+    // Control Elements Mapping
+    const controls = {
+        imageLoader: document.getElementById('imageLoader'),
+        customFontLoader: document.getElementById('customFontLoader'),
         text: document.getElementById('watermarkText'),
-        color: document.getElementById('textColor'),
+        fontFamily: document.getElementById('fontFamily'),
+        textColor: document.getElementById('textColor'),
+        shadowColor: document.getElementById('shadowColor'),
         size: document.getElementById('fontSize'),
         opacity: document.getElementById('opacity'),
-        sizeVal: document.getElementById('sizeVal'),
-        opVal: document.getElementById('opacityVal')
+        rotation: document.getElementById('rotation'),
+        shadowBlur: document.getElementById('shadowBlur'),
+        variant: document.getElementsByName('layoutVariant')
     };
 
-    el.loader.addEventListener('change', handleImage);
-    el.text.addEventListener('input', drawCanvas);
-    el.color.addEventListener('input', drawCanvas);
-    
-    el.size.addEventListener('input', (e) => { el.sizeVal.innerText = e.target.value + 'px'; drawCanvas(); });
-    el.opacity.addEventListener('input', (e) => { el.opVal.innerText = Math.round(e.target.value * 100) + '%'; drawCanvas(); });
+    // Value Display Elements
+    const displays = {
+        size: document.getElementById('sizeVal'),
+        opacity: document.getElementById('opacityVal'),
+        rotation: document.getElementById('rotationVal'),
+        shadow: document.getElementById('shadowVal')
+    };
 
-    // AI Logic
-    document.getElementById('ai-suggest-btn').addEventListener('click', async () => {
-        const currentText = el.text.value || "Photography";
-        const btn = document.getElementById('ai-suggest-btn');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    // --- Core Logic ---
 
-        const prompt = `Give me exactly ONE short, creative watermark slogan for a brand related to: "${currentText}". Max 3 words. No quotes.`;
-
-        try {
-            const response = await fetch(WORKER_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: prompt })
-            });
-            const data = await response.json();
-            const reply = data.response || data.reply || data.message || data.text || data.content;
-            if(reply) {
-                el.text.value = reply.replace(/["']/g, "").trim();
-                drawCanvas();
-            }
-        } catch (e) {
-            console.error(e);
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i>';
-        }
-    });
-
-    function handleImage(e) {
-        if(!e.target.files[0]) return;
+    // 1. Initial Image Load
+    controls.imageLoader.addEventListener('change', (e) => {
+        if (!e.target.files[0]) return;
         const reader = new FileReader();
         reader.onload = (event) => {
-            const img = new Image();
-            img.onload = () => {
-                uploadedImage = img;
-                canvas.width = img.width;
-                canvas.height = img.height;
-                document.getElementById('placeholder-text').style.display = 'none';
+            uploadedImage = new Image();
+            uploadedImage.onload = () => {
+                // Set canvas size to match image original size
+                canvas.width = uploadedImage.width;
+                canvas.height = uploadedImage.height;
+                
+                // UI Updates
+                placeholderText.style.opacity = '0';
+                setTimeout(() => { placeholderText.style.display = 'none'; }, 300);
                 canvas.classList.remove('opacity-0');
+                
                 drawCanvas();
             }
-            img.src = event.target.result;
+            uploadedImage.src = event.target.result;
         }
         reader.readAsDataURL(e.target.files[0]);
-    }
+    });
 
+    // 2. Custom Font Loader Logic
+    controls.customFontLoader.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        customFontStatus.innerText = "Loading...";
+        const fontName = 'CustomFont-' + Date.now();
+        const reader = new FileReader();
+
+        reader.onload = async (event) => {
+            const buffer = event.target.result;
+            const fontFace = new FontFace(fontName, buffer);
+            
+            try {
+                const loadedFace = await fontFace.load();
+                document.fonts.add(loadedFace);
+                customFontLoadedName = fontName;
+                customFontStatus.innerText = "Loaded: " + file.name.substring(0, 10) + "...";
+                customFontStatus.classList.add('text-sky-400');
+                
+                // Add to dropdown and select it
+                const option = document.createElement("option");
+                option.value = fontName;
+                option.text = `Uploaded: ${file.name.substring(0, 10)}...`;
+                option.style.fontFamily = fontName;
+                controls.fontFamily.add(option);
+                controls.fontFamily.value = fontName;
+
+                drawCanvas();
+            } catch (err) {
+                console.error("Font loading failed:", err);
+                customFontStatus.innerText = "Error Loading";
+                customFontStatus.classList.add('text-red-400');
+                customFontLoadedName = null;
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    // 3. Main Drawing Function
     function drawCanvas() {
         if (!uploadedImage) return;
+
+        // Reset Canvas and draw base image
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.globalAlpha = 1.0;
         ctx.drawImage(uploadedImage, 0, 0);
 
-        const text = el.text.value;
-        const size = el.size.value;
-        ctx.font = `bold ${size}px 'Plus Jakarta Sans', sans-serif`;
-        ctx.fillStyle = el.color.value;
-        ctx.globalAlpha = parseFloat(el.opacity.value);
+        // Save unstyled state
+        ctx.save();
+
+        // 3a. Gather All Settings
+        const settings = {
+            text: controls.text.value || "© BrandMark Pro",
+            color: controls.textColor.value,
+            shadowColor: controls.shadowColor.value,
+            size: parseInt(controls.size.value),
+            opacity: parseFloat(controls.opacity.value),
+            rotation: parseInt(controls.rotation.value) * (Math.PI / 180), // Convert degrees to radians
+            shadowBlur: parseInt(controls.shadowBlur.value),
+            font: controls.fontFamily.value,
+            variant: Array.from(controls.variant).find(r => r.checked).value
+        };
+
+        // Update UI displays
+        displays.size.innerText = settings.size + 'px';
+        displays.opacity.innerText = Math.round(settings.opacity * 100) + '%';
+        displays.rotation.innerText = controls.rotation.value + '°';
+        displays.shadow.innerText = settings.shadowBlur + 'px';
+
+        // 3b. Configure Context Styles
+        ctx.font = `bold ${settings.size}px ${settings.font}`;
+        ctx.fillStyle = settings.color;
+        ctx.globalAlpha = settings.opacity;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
+        
+        // Setup Shadow/Glow
+        ctx.shadowColor = settings.shadowColor;
+        ctx.shadowBlur = settings.shadowBlur;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
 
-        ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+        // 3c. Layout Variant Logic
+        if (settings.variant === 'single') {
+            // Draw Single Center text with Rotation
+            drawRotatedText(ctx, settings.text, canvas.width / 2, canvas.height / 2, settings.rotation);
+        } else {
+            // Draw Tiled Grid pattern
+            drawTiledPattern(ctx, settings.text, canvas.width, canvas.height, settings.size, settings.rotation);
+        }
+
+        // Restore context state
+        ctx.restore();
     }
 
+    // -- Helper Functions for Drawing ---
+
+    function drawRotatedText(context, text, x, y, angle) {
+        context.save();
+        context.translate(x, y); // Move origin to text center
+        context.rotate(angle); // Rotate context
+        context.fillText(text, 0, 0); // Draw at new origin
+        context.restore(); // Restore origin
+    }
+
+    function drawTiledPattern(context, text, canvasW, canvasH, fontSize, angle) {
+        const textWidth = context.measureText(text).width;
+        
+        // Calculate dynamic horizontal and vertical spacing based on text size
+        const horizontalGap = textWidth * 1.5;
+        const verticalGap = fontSize * 3.5;
+
+        context.save();
+        
+        // To cover the whole area when rotated, we need a larger bounding box
+        const maxDim = Math.max(canvasW, canvasH) * 2;
+        context.translate(canvasW/2, canvasH/2);
+        context.rotate(angle);
+
+        // Loop to draw grid
+        for (let y = -maxDim; y < maxDim; y += verticalGap) {
+            let offset = 0;
+            // Add slight offset for staggered grid look
+            if ((Math.round(y/verticalGap) % 2) === 0) offset = horizontalGap / 2;
+
+            for (let x = -maxDim; x < maxDim; x += horizontalGap) {
+                context.fillText(text, x + offset, y);
+            }
+        }
+        context.restore();
+    }
+
+    // 4. Update on Input Changes (Throttled for performance on large images)
+    let drawingTimeout;
+    const allInputs = document.querySelectorAll('input, select');
+    allInputs.forEach(input => {
+        input.addEventListener('input', () => {
+            clearTimeout(drawingTimeout);
+            drawingTimeout = setTimeout(drawCanvas, 10); // Very fast debounce
+        });
+    });
+
+    // 5. Download Function
     function downloadImage() {
         if(!uploadedImage) return alert("Please upload an image first.");
-        const link = document.createElement('a');
-        link.download = 'brandmark-ai-export.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
+        
+        // Set loading state on button
+        const btn = document.querySelector('button[onclick="downloadImage()"]');
+        const ogContent = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Exporting...';
+        btn.disabled = true;
+
+        // Use a small timeout to allow UI to update before processing high-res export
+        setTimeout(() => {
+            const dataUrl = canvas.toDataURL('image/png', 1.0);
+            const link = document.createElement('a');
+            link.download = 'brandmark-pro-manual-export.png';
+            link.href = dataUrl;
+            link.click();
+
+            // Restore button state
+            btn.innerHTML = ogContent;
+            btn.disabled = false;
+        }, 100);
     }
 </script>
+
 </body>
 </html>
 
-
-  
+                
