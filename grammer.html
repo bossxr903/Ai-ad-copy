@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Document Writer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Notion-like minimal styling */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif; }
+        .editor-textarea { resize: none; border: none; outline: none; background: transparent; }
+        .prose h1 { font-size: 2em; font-weight: 700; margin-bottom: 0.5em; color: #111827; }
+        .prose h2 { font-size: 1.5em; font-weight: 600; margin-top: 1em; margin-bottom: 0.5em; color: #1f2937; }
+        .prose blockquote { border-left: 4px solid #3b82f6; padding-left: 1rem; color: #4b5563; font-style: italic; background: #f3f4f6; padding: 10px; border-radius: 4px;}
+        .prose ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1em; }
+        .prose p { margin-bottom: 1em; line-height: 1.7; color: #374151; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="h-screen flex flex-col bg-white overflow-hidden">
+
+    <!-- Navbar -->
+    <nav class="border-b border-gray-200 bg-white px-6 py-3 flex items-center justify-between shrink-0 z-10 relative shadow-sm">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center text-white text-sm">
+                <i class="fa-solid fa-pen-nib"></i>
+            </div>
+            <span class="font-semibold text-gray-800 text-lg">AI Docs</span>
+        </div>
+        
+        <div class="flex gap-2">
+            <button id="btn-polish" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-md text-sm font-medium transition-colors flex items-center gap-2 border border-indigo-100">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Polish Text
+            </button>
+            <button id="btn-summarize" class="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-md text-sm font-medium transition-colors flex items-center gap-2 border border-emerald-100">
+                <i class="fa-solid fa-compress"></i> Summarize
+            </button>
+            <div class="w-px bg-gray-200 mx-1"></div>
+            <button onclick="document.getElementById('mdInput').value=''; updatePreview();" class="px-3 py-2 text-gray-500 hover:bg-gray-100 rounded-md text-sm transition-colors tooltip" title="Clear All">
+                <i class="fa-solid fa-trash-can"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 flex overflow-hidden">
+        
+        <!-- Left: Editor -->
+        <div class="w-1/2 flex flex-col bg-gray-50 border-r border-gray-200 relative">
+            <div class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest bg-gray-50/90 backdrop-blur sticky top-0">Markdown Input</div>
+            <textarea id="mdInput" class="editor-textarea flex-1 w-full p-6 pt-0 font-mono text-[15px] leading-relaxed text-gray-700" placeholder="# Welcome to AI Docs
+            
+Write your thoughts here using markdown formatting.
+- **Bold text**
+- *Italic text*
+- > Quotes
+
+Click the 'Polish Text' button above to let AI fix grammar and improve your writing."></textarea>
+        </div>
+
+        <!-- Right: Preview -->
+        <div class="w-1/2 flex flex-col bg-white relative">
+            <div class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest bg-white/90 backdrop-blur sticky top-0 border-b border-gray-100 shadow-sm">Live Document</div>
+            <div id="htmlPreview" class="prose flex-1 p-8 overflow-y-auto w-full max-w-3xl mx-auto"></div>
+        </div>
+
+    </main>
+
+<script>
+    const WORKER_URL = 'https://crimson-firefly-6c68.ashrafhosen839.workers.dev/';
+    const mdInput = document.getElementById('mdInput');
+    const htmlPreview = document.getElementById('htmlPreview');
+
+    function parseMarkdown(md) {
+        let html = md;
+        html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+        html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+        html = html.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
+        html = html.replace(/\*(.*?)\*/gim, '<em>$1</em>');
+        html = html.replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>');
+        html = html.replace(/^- (.*$)/gim, '<ul><li>$1</li></ul>');
+        html = html.replace(/\n\n/gim, '</p><p>');
+        return '<p>' + html + '</p>';
+    }
+
+    function updatePreview() {
+        htmlPreview.innerHTML = parseMarkdown(mdInput.value || '*Document is empty*');
+    }
+    
+    mdInput.addEventListener('input', updatePreview);
+    updatePreview(); // Init
+
+    // AI Logic
+    async function processAI(type) {
+        const text = mdInput.value.trim();
+        if(!text) return;
+
+        const btn = document.getElementById(type === 'polish' ? 'btn-polish' : 'btn-summarize');
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Working...';
+        btn.classList.add('opacity-50');
+
+        let prompt = type === 'polish' 
+            ? `Act as an expert editor. Fix grammar and improve flow of this markdown text. Return ONLY the improved markdown:\n\n${text}`
+            : `Provide a short 2-3 sentence summary of this text:\n\n${text}`;
+
+        try {
+            const response = await fetch(WORKER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: prompt })
+            });
+
+            const data = await response.json();
+            const reply = data.response || data.reply || data.message || data.text || data.content;
+
+            if(type === 'polish') {
+                mdInput.value = reply;
+            } else {
+                mdInput.value += `\n\n## AI Summary\n> ${reply}`;
+            }
+            updatePreview();
+
+        } catch (error) {
+            alert("AI processing failed. Check console.");
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+            btn.classList.remove('opacity-50');
+        }
+    }
+
+    document.getElementById('btn-polish').addEventListener('click', () => processAI('polish'));
+    document.getElementById('btn-summarize').addEventListener('click', () => processAI('summarize'));
+</script>
+</body>
+</html>
+
+
