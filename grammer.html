@@ -8,13 +8,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* Notion-like minimal styling */
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
         .editor-textarea { resize: none; border: none; outline: none; background: transparent; }
         .prose h1 { font-size: 2em; font-weight: 700; margin-bottom: 0.5em; color: #111827; }
         .prose h2 { font-size: 1.5em; font-weight: 600; margin-top: 1em; margin-bottom: 0.5em; color: #1f2937; }
-        .prose blockquote { border-left: 4px solid #3b82f6; padding-left: 1rem; color: #4b5563; font-style: italic; background: #f3f4f6; padding: 10px; border-radius: 4px;}
+        .prose h3 { font-size: 1.2em; font-weight: 600; margin-top: 1em; margin-bottom: 0.5em; color: #374151; }
+        .prose blockquote { border-left: 4px solid #3b82f6; padding-left: 1rem; color: #4b5563; font-style: italic; background: #f8fafc; padding: 12px; border-radius: 4px; margin: 1em 0;}
         .prose ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1em; }
+        .prose ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1em; }
         .prose p { margin-bottom: 1em; line-height: 1.7; color: #374151; }
+        .prose strong { color: #111827; font-weight: 600; }
+        .prose em { color: #4b5563; }
         
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
@@ -27,22 +31,22 @@
 
     <!-- Navbar -->
     <nav class="border-b border-gray-200 bg-white px-6 py-3 flex items-center justify-between shrink-0 z-10 relative shadow-sm">
-        <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center text-white text-sm">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white text-sm shadow-sm">
                 <i class="fa-solid fa-pen-nib"></i>
             </div>
-            <span class="font-semibold text-gray-800 text-lg">AI Docs</span>
+            <span class="font-semibold text-gray-800 text-lg tracking-tight">AI Docs</span>
         </div>
         
-        <div class="flex gap-2">
-            <button id="btn-polish" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-md text-sm font-medium transition-colors flex items-center gap-2 border border-indigo-100">
+        <div class="flex gap-2.5">
+            <button id="btn-polish" class="px-4 py-2 bg-white hover:bg-gray-50 text-indigo-600 rounded-lg text-sm font-medium transition-all shadow-sm border border-gray-200 flex items-center gap-2 hover:border-indigo-200 hover:text-indigo-700">
                 <i class="fa-solid fa-wand-magic-sparkles"></i> Polish Text
             </button>
-            <button id="btn-summarize" class="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-md text-sm font-medium transition-colors flex items-center gap-2 border border-emerald-100">
+            <button id="btn-summarize" class="px-4 py-2 bg-white hover:bg-gray-50 text-emerald-600 rounded-lg text-sm font-medium transition-all shadow-sm border border-gray-200 flex items-center gap-2 hover:border-emerald-200 hover:text-emerald-700">
                 <i class="fa-solid fa-compress"></i> Summarize
             </button>
             <div class="w-px bg-gray-200 mx-1"></div>
-            <button onclick="document.getElementById('mdInput').value=''; updatePreview();" class="px-3 py-2 text-gray-500 hover:bg-gray-100 rounded-md text-sm transition-colors tooltip" title="Clear All">
+            <button onclick="clearDoc()" class="px-3 py-2 text-gray-500 hover:bg-red-50 hover:text-red-600 rounded-lg text-sm transition-colors tooltip border border-transparent" title="Clear Document">
                 <i class="fa-solid fa-trash-can"></i>
             </button>
         </div>
@@ -52,9 +56,12 @@
     <main class="flex-1 flex overflow-hidden">
         
         <!-- Left: Editor -->
-        <div class="w-1/2 flex flex-col bg-gray-50 border-r border-gray-200 relative">
-            <div class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest bg-gray-50/90 backdrop-blur sticky top-0">Markdown Input</div>
-            <textarea id="mdInput" class="editor-textarea flex-1 w-full p-6 pt-0 font-mono text-[15px] leading-relaxed text-gray-700" placeholder="# Welcome to AI Docs
+        <div class="w-1/2 flex flex-col bg-[#fafafa] border-r border-gray-200 relative shadow-[inset_-10px_0_20px_-20px_rgba(0,0,0,0.1)]">
+            <div class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-[0.15em] sticky top-0 flex justify-between items-center z-10">
+                <span>Markdown Input</span>
+                <span id="char-count" class="font-normal normal-case tracking-normal">0 words</span>
+            </div>
+            <textarea id="mdInput" class="editor-textarea flex-1 w-full p-6 pt-2 font-mono text-[15px] leading-[1.8] text-gray-700 focus:outline-none" placeholder="# Welcome to AI Docs
             
 Write your thoughts here using markdown formatting.
 - **Bold text**
@@ -66,8 +73,11 @@ Click the 'Polish Text' button above to let AI fix grammar and improve your writ
 
         <!-- Right: Preview -->
         <div class="w-1/2 flex flex-col bg-white relative">
-            <div class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest bg-white/90 backdrop-blur sticky top-0 border-b border-gray-100 shadow-sm">Live Document</div>
-            <div id="htmlPreview" class="prose flex-1 p-8 overflow-y-auto w-full max-w-3xl mx-auto"></div>
+            <div class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-[0.15em] bg-white/95 backdrop-blur sticky top-0 border-b border-gray-100 shadow-sm z-10 flex justify-between items-center">
+                <span>Live Document Preview</span>
+                <button onclick="copyHTML()" id="copy-html-btn" class="text-gray-400 hover:text-gray-700 normal-case tracking-normal"><i class="fa-regular fa-copy"></i> Copy HTML</button>
+            </div>
+            <div id="htmlPreview" class="prose flex-1 p-10 overflow-y-auto w-full max-w-3xl mx-auto selection:bg-blue-100 selection:text-blue-900 pb-20"></div>
         </div>
 
     </main>
@@ -76,41 +86,106 @@ Click the 'Polish Text' button above to let AI fix grammar and improve your writ
     const WORKER_URL = 'https://crimson-firefly-6c68.ashrafhosen839.workers.dev/';
     const mdInput = document.getElementById('mdInput');
     const htmlPreview = document.getElementById('htmlPreview');
+    const wordCount = document.getElementById('char-count');
 
+    // Advanced Regex Markdown Parser (Handles paragraphs better)
     function parseMarkdown(md) {
+        if (!md.trim()) return '<p class="text-gray-400 italic mt-5 text-center">Document is empty.</p>';
+        
         let html = md;
+        // Headers
         html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
         html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
         html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+        // Bold & Italic
         html = html.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
         html = html.replace(/\*(.*?)\*/gim, '<em>$1</em>');
+        // Blockquote
         html = html.replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>');
+        // Lists (Simple approach)
         html = html.replace(/^- (.*$)/gim, '<ul><li>$1</li></ul>');
-        html = html.replace(/\n\n/gim, '</p><p>');
-        return '<p>' + html + '</p>';
+        html = html.replace(/^\d+\. (.*$)/gim, '<ol><li>$1</li></ol>');
+        
+        // Paragraphs - Split by double newline, wrap in <p>, unless it's a heading/list/quote
+        html = html.split(/\n\n+/).map(para => {
+            para = para.trim();
+            if (para.match(/^(<h|<ul|<ol|<blockquote)/)) {
+                return para; 
+            } else if (para.length > 0) {
+                return `<p>${para.replace(/\n/g, '<br>')}</p>`;
+            }
+            return '';
+        }).join('\n');
+
+        return html;
     }
 
     function updatePreview() {
-        htmlPreview.innerHTML = parseMarkdown(mdInput.value || '*Document is empty*');
+        const text = mdInput.value;
+        htmlPreview.innerHTML = parseMarkdown(text);
+        
+        // Update word count
+        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        wordCount.innerText = `${words} word${words !== 1 ? 's' : ''}`;
     }
     
     mdInput.addEventListener('input', updatePreview);
     updatePreview(); // Init
 
-    // AI Logic
+    function clearDoc() {
+        if(confirm('Clear entire document?')) {
+            mdInput.value = '';
+            updatePreview();
+        }
+    }
+
+    function copyHTML() {
+        const html = htmlPreview.innerHTML;
+        navigator.clipboard.writeText(html).then(() => {
+            const btn = document.getElementById('copy-html-btn');
+            const og = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check text-green-500"></i> Copied';
+            setTimeout(() => { btn.innerHTML = og; }, 2000);
+        });
+    }
+
+    // AI Logic with STRICT prompting
     async function processAI(type) {
         const text = mdInput.value.trim();
         if(!text) return;
 
         const btn = document.getElementById(type === 'polish' ? 'btn-polish' : 'btn-summarize');
         const originalHtml = btn.innerHTML;
+        
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Working...';
-        btn.classList.add('opacity-50');
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
+        btn.classList.add('bg-gray-100', 'text-gray-400');
+        btn.classList.remove('hover:bg-gray-50');
 
-        let prompt = type === 'polish' 
-            ? `Act as an expert editor. Fix grammar and improve flow of this markdown text. Return ONLY the improved markdown:\n\n${text}`
-            : `Provide a short 2-3 sentence summary of this text:\n\n${text}`;
+        let prompt = "";
+        
+        if (type === 'polish') {
+            // Very strict prompt to stop conversational AI behavior
+            prompt = `You are a strict grammar correction tool. 
+Task: Fix grammar, spelling, and phrasing errors in the provided text.
+Rules:
+1. DO NOT add conversational replies (e.g., "Here is the text", "Hey", "Sure").
+2. DO NOT add emojis.
+3. DO NOT change the core meaning or add new ideas.
+4. Keep the exact same Markdown formatting.
+5. ONLY output the corrected text.
+
+Text to correct:
+"""
+${text}
+"""`;
+        } else {
+            prompt = `Write a professional, concise summary (maximum 3 sentences) of the following text. Do not include conversational filler words like "Here is the summary".
+Text:
+"""
+${text}
+"""`;
+        }
 
         try {
             const response = await fetch(WORKER_URL, {
@@ -119,22 +194,32 @@ Click the 'Polish Text' button above to let AI fix grammar and improve your writ
                 body: JSON.stringify({ message: prompt })
             });
 
+            if (!response.ok) throw new Error("Network response was not ok");
             const data = await response.json();
-            const reply = data.response || data.reply || data.message || data.text || data.content;
+            
+            let reply = data.response || data.reply || data.message || data.text || data.content || "";
+            
+            // Post-processing: Remove AI's intro phrases if it still disobeys the prompt
+            reply = reply.replace(/Here is the.*:\n/gi, '')
+                         .replace(/Sure,.*\n/gi, '')
+                         .replace(/"""/g, '') // remove quote markers if it copies them
+                         .trim();
 
             if(type === 'polish') {
                 mdInput.value = reply;
             } else {
-                mdInput.value += `\n\n## AI Summary\n> ${reply}`;
+                mdInput.value += `\n\n> **AI Summary:** ${reply}`;
             }
             updatePreview();
 
         } catch (error) {
-            alert("AI processing failed. Check console.");
+            alert("AI Error: Connection failed. Please try again.");
+            console.error(error);
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalHtml;
-            btn.classList.remove('opacity-50');
+            btn.classList.remove('bg-gray-100', 'text-gray-400');
+            btn.classList.add('hover:bg-gray-50');
         }
     }
 
@@ -145,3 +230,4 @@ Click the 'Polish Text' button above to let AI fix grammar and improve your writ
 </html>
 
 
+    
